@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Store</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { margin-bottom: 20px; }
+        .controls { margin-bottom: 15px; display: flex; gap: 10px; }
+        input[type="text"] { padding: 8px; width: 250px; }
+        button { padding: 8px 15px; cursor: pointer; }
+        .btn-add { background: #28a745; color: white; border: none; }
+        .btn-search { background: #007bff; color: white; border: none; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #333; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .actions button { margin-right: 5px; padding: 5px 10px; }
+        .btn-edit { background: #ffc107; border: none; }
+        .btn-delete { background: #dc3545; color: white; border: none; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; width: 400px; }
+        .modal-content h2 { margin-top: 0; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 3px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .form-actions { margin-top: 15px; display: flex; gap: 10px; }
+        .btn-save { background: #28a745; color: white; border: none; }
+        .btn-cancel { background: #6c757d; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h1>Laptop Store</h1>
+    
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search...">
+        <button class="btn-search" onclick="searchLaptops()">Search</button>
+        <button class="btn-add" onclick="openAddModal()">+ Add New</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>Processor</th>
+                <th>RAM</th>
+                <th>Storage</th>
+                <th>Price (NPR)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="laptopTable">
+            <tr><td colspan="9">Loading...</td></tr>
+        </tbody>
+    </table>
+
+    <div id="laptopModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Laptop</h2>
+            <form id="laptopForm">
+                <input type="hidden" id="laptopId">
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select id="brand" required>
+                        <option value="">Select</option>
+                        <option value="Dell">Dell</option>
+                        <option value="Apple">Apple</option>
+                        <option value="HP">HP</option>
+                        <option value="Lenovo">Lenovo</option>
+                        <option value="ASUS">ASUS</option>
+                        <option value="Acer">Acer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Model</label>
+                    <input type="text" id="model" required>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="year" required>
+                </div>
+                <div class="form-group">
+                    <label>Processor</label>
+                    <input type="text" id="processor">
+                </div>
+                <div class="form-group">
+                    <label>RAM</label>
+                    <input type="text" id="ram">
+                </div>
+                <div class="form-group">
+                    <label>Storage</label>
+                    <input type="text" id="storage">
+                </div>
+                <div class="form-group">
+                    <label>Price (NPR)</label>
+                    <input type="number" id="price_npr" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">Save</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = 'api.php';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLaptops();
+            document.getElementById('laptopForm').addEventListener('submit', saveForm);
+            document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') searchLaptops(); });
+        });
+
+        async function loadLaptops() {
+            const res = await fetch(`${API}?action=index`);
+            const data = await res.json();
+            renderTable(data.data);
+        }
+
+        function renderTable(laptops) {
+            const tbody = document.getElementById('laptopTable');
+            if (!laptops.length) { tbody.innerHTML = '<tr><td colspan="9">No data</td></tr>'; return; }
+            tbody.innerHTML = laptops.map(l => `
+                <tr>
+                    <td>${l.id}</td>
+                    <td>${l.brand}</td>
+                    <td>${l.model}</td>
+                    <td>${l.year}</td>
+                    <td>${l.processor || '-'}</td>
+                    <td>${l.ram || '-'}</td>
+                    <td>${l.storage || '-'}</td>
+                    <td>NPR ${Number(l.price_npr).toLocaleString()}</td>
+                    <td class="actions">
+                        <button class="btn-edit" onclick="editLaptop(${l.id})">Edit</button>
+                        <button class="btn-delete" onclick="deleteLaptop(${l.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function searchLaptops() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            const url = keyword ? `${API}?action=index&search=${encodeURIComponent(keyword)}` : `${API}?action=index`;
+            const res = await fetch(url);
+            const data = await res.json();
+            renderTable(data.data);
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Laptop';
+            document.getElementById('laptopForm').reset();
+            document.getElementById('laptopId').value = '';
+            document.getElementById('laptopModal').classList.add('active');
+        }
+
+        async function editLaptop(id) {
+            const res = await fetch(`${API}?action=show&id=${id}`);
+            const data = await res.json();
+            const l = data.data;
+            document.getElementById('modalTitle').textContent = 'Edit Laptop';
+            document.getElementById('laptopId').value = l.id;
+            document.getElementById('brand').value = l.brand;
+            document.getElementById('model').value = l.model;
+            document.getElementById('year').value = l.year;
+            document.getElementById('processor').value = l.processor || '';
+            document.getElementById('ram').value = l.ram || '';
+            document.getElementById('storage').value = l.storage || '';
+            document.getElementById('price_npr').value = l.price_npr;
+            document.getElementById('laptopModal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('laptopModal').classList.remove('active'); }
+
+        async function saveForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('laptopId').value;
+            const data = {
+                brand: document.getElementById('brand').value,
+                model: document.getElementById('model').value,
+                year: parseInt(document.getElementById('year').value),
+                processor: document.getElementById('processor').value,
+                ram: document.getElementById('ram').value,
+                storage: document.getElementById('storage').value,
+                price_npr: parseFloat(document.getElementById('price_npr').value)
+            };
+            const action = id ? 'update' : 'store';
+            const url = id ? `${API}?action=${action}&id=${id}` : `${API}?action=${action}`;
+            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            closeModal();
+            loadLaptops();
+        }
+
+        async function deleteLaptop(id) {
+            if (!confirm('Delete this laptop?')) return;
+            await fetch(`${API}?action=destroy&id=${id}`, { method: 'POST' });
+            loadLaptops();
+        }
+    </script>
+</body>
+</html>
