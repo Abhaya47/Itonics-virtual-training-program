@@ -1,0 +1,102 @@
+[
+    {
+        "id": 1,
+        "brand": "Dell",
+        "model": "XPS 15",
+        "year": 2024,
+        "processor": "Intel Core i7-13700H",
+        "ram": "16GB",
+        "storage": "512GB SSD",
+        "price_npr": 285000
+    },
+    {
+        "id": 2,
+        "brand": "Dell",
+        "model": "Inspiron 15",
+        "year": 2023,
+        "processor": "Intel Core i5-1235U",
+        "ram": "8GB",
+        "storage": "256GB SSD",
+        "price_npr": 125000
+    },
+    {
+        "id": 3,
+        "brand": "Apple",
+        "model": "MacBook Pro 14",
+        "year": 2024,
+        "processor": "Apple M3 Pro",
+        "ram": "18GB",
+        "storage": "512GB SSD",
+        "price_npr": 385000
+    },
+    {
+        "id": 4,
+        "brand": "Apple",
+        "model": "MacBook Air M2",
+        "year": 2023,
+        "processor": "Apple M2",
+        "ram": "8GB",
+        "storage": "256GB SSD",
+        "price_npr": 225000
+    },
+    {
+        "id": 5,
+        "brand": "HP",
+        "model": "Pavilion 15",
+        "year": 2024,
+        "processor": "AMD Ryzen 7 7730U",
+        "ram": "16GB",
+        "storage": "512GB SSD",
+        "price_npr": 145000
+    },
+    {
+        "id": 6,
+        "brand": "HP",
+        "model": "Spectre x360",
+        "year": 2024,
+        "processor": "Intel Core i7-1355U",
+        "ram": "16GB",
+        "storage": "1TB SSD",
+        "price_npr": 295000
+    },
+    {
+        "id": 7,
+        "brand": "Lenovo",
+        "model": "ThinkPad X1 Carbon",
+        "year": 2024,
+        "processor": "Intel Core i7-1365U",
+        "ram": "16GB",
+        "storage": "512GB SSD",
+        "price_npr": 325000
+    },
+    {
+        "id": 8,
+        "brand": "Lenovo",
+        "model": "IdeaPad Slim 5",
+        "year": 2023,
+        "processor": "AMD Ryzen 5 7530U",
+        "ram": "8GB",
+        "storage": "512GB SSD",
+        "price_npr": 115000
+    },
+    {
+        "id": 9,
+        "brand": "ASUS",
+        "model": "ROG Zephyrus G14",
+        "year": 2024,
+        "processor": "AMD Ryzen 9 7940HS",
+        "ram": "32GB",
+        "storage": "1TB SSD",
+        "price_npr": 375000
+    },
+    {
+        "id": 10,
+        "brand": "Acer",
+        "model": "Swift 3",
+        "year": 2023,
+        "processor": "Intel Core i5-1240P",
+        "ram": "8GB",
+        "storage": "512GB SSD",
+        "price_npr": 105000
+    }
+]
