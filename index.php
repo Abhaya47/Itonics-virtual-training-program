@@ -6,7 +6,7 @@
 </head>
 <body>
 
-    <h1>Student Course Enrollment System</h1>
+    <h1>Student Course Enrollment System - MAIN</h1>
 
     <ul>
         <li><a href="students/index.php">Manage Students</a></li>
@@ -16,3 +16,4 @@
 
 </body>
 </html>
+
