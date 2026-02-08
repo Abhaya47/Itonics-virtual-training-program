@@ -23,5 +23,16 @@ $data=json_decode($execution1);
 
 echo "<pre>";
 print_r($data);
+<<<<<<< HEAD
 echo "This is Tushar"
+=======
+echo"wdkh";
+echo"wdkh";
+echo"wdkh";
+echo"wdkh";
+echo"wdkh";
+
+
+>>>>>>> b531e70 (testconflict)
 echo "</pre>";
+
