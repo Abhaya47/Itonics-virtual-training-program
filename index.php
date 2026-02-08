@@ -8,6 +8,8 @@
 
     <h1>Student Course Enrollment System - MAIN</h1>
 
+    <h1>Student Course Enrollment System - BIKEE</h1>
+
     <ul>
         <li><a href="students/index.php">Manage Students</a></li>
         <li><a href="courses/index.php">Manage Courses</a></li>
