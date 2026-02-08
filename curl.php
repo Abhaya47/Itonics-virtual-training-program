@@ -47,3 +47,5 @@ $data = json_decode($response, true);
 
 
 <p>This paragraph is added to simulate git merge conflict on branch pranav-poudyal</p>
+
+<p> This paragraph is added by Pradosh as a task of git merge conflict issue</p>
