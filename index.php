@@ -15,6 +15,7 @@
         <li><a href="courses/index.php">Manage Courses</a></li>
         <li><a href="enrollments/index.php">Manage Enrollments</a></li>
     </ul>
+    <h1>This is Tushar Luitel</h1>
 
 </body>
 </html>
