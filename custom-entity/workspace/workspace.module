@@ -1,0 +1,395 @@
+<?php
+
+/**
+ * Implements hook_entity_info().
+ */
+function workspace_entity_info()
+{
+  $info = array(
+    'workspace' => array(
+      'label' => t('Workspace'),
+      'base table' => 'workspace',
+      'entity keys' => array(
+        'id' => 'id',
+        'label' => 'title',
+      ),
+      'controller class' => 'WorkspaceController',
+      'access callback' => 'workspace_access',
+      'module' => 'workspace',
+      'uri callback' => 'workspace_uri',
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function workspace_permission()
+{
+  return array(
+    'view workspace' => array(
+      'title' => t('View workspace content'),
+    ),
+    'administer workspace' => array(
+      'title' => t('Administer workspace'),
+    ),
+  );
+}
+
+
+
+/**
+ * Implements hook_menu().
+ */
+function workspace_menu()
+{
+  $items = array();
+
+  // List page
+  $items['workspace/list'] = array(
+    'title' => 'Workspaces',
+    'page callback' => 'workspace_list',
+    'access arguments' => array('view workspace'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // Add form
+  $items['workspace/add'] = array(
+    'title' => 'Add workspace',
+    'page callback' => 'workspace_add',
+    'access arguments' => array('administer workspace'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // View page
+  $items['workspace/%workspace'] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('workspace', 1),
+    'page callback' => 'workspace_view',
+    'page arguments' => array(1),
+    'access arguments' => array('view workspace'),
+  );
+  $items['workspace/%workspace/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  // Edit form
+  $items['workspace/%workspace/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('workspace_edit_form', 1),
+    'access arguments' => array('administer workspace'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // Delete confirmation
+  $items['workspace/%workspace/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('workspace_delete_form', 1),
+    'access arguments' => array('administer workspace'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function workspace_theme()
+{
+  $base_path = drupal_get_path('module', 'workspace') . '/templates';
+  return array(
+    // Remove 'workspace_list' entry if present.
+    'workspace_form' => array(
+      'render element' => 'form',
+      'template' => 'workspace-form',
+      'path' => $base_path,
+    ),
+  );
+}
+
+
+
+function workspace_list()
+{
+  drupal_set_title(t('Workspaces'));
+
+  $workspaces = entity_load('workspace');
+  if (empty($workspaces)) {
+    return t('No workspaces found.');
+  }
+
+  // Sort by title.
+  uasort($workspaces, function ($a, $b) {
+    return strnatcasecmp($a->title, $b->title);
+  });
+
+  // Table headers.
+  $headers = array(
+    t('ID'),
+    t('Title'),
+    t('Description'),
+    t('Status'),
+    t('Operations'),
+  );
+
+  // Build rows.
+  $rows = array();
+  foreach ($workspaces as $workspace) {
+    // Get human-readable status.
+    $status_options = workspace_status_options();
+    $status = isset($status_options[$workspace->status]) ? $status_options[$workspace->status] : t('Unknown');
+
+    // Build operations links.
+    $links = array();
+    $links['view'] = array(
+      'title' => t('View'),
+    );
+    $operations = l(t('View'), 'workspace/' . $workspace->id);
+    if (user_access('administer workspace')) {
+      $operations .= ' | ' . l(t('Edit'), 'workspace/' . $workspace->id . '/edit');
+      $operations .= ' | ' . l(t('Delete'), 'workspace/' . $workspace->id . '/delete');
+    }
+
+    // Add row.
+    $rows[] = array(
+      'data' => array(
+        check_plain($workspace->id),
+        l(check_plain($workspace->title), 'workspace/' . $workspace->id),
+        check_plain($workspace->description),
+        check_plain($status),
+        $operations,
+      ),
+    );
+  }
+
+  // Return themed table.
+  return theme('table', array(
+    'header' => $headers,
+    'rows' => $rows,
+    'attributes' => array('class' => array('workspace-table')),
+    'empty' => t('No workspaces found.'),
+  ));
+}
+
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function workspace_entity_property_info()
+{
+  $info = array();
+  $properties = &$info['workspace']['properties'];
+
+  $properties['id'] = array(
+    'type' => 'integer',
+    'schema field' => 'id',
+    'label' => t('Workspace ID'),
+    'description' => t('The unique ID of the workspace.'),
+  );
+  $properties['title'] = array(
+    'type' => 'text',
+    'schema field' => 'title',
+    'label' => t('Title'),
+    'required' => TRUE,
+  );
+  $properties['description'] = array(
+    'type' => 'text',
+    'schema field' => 'description',
+    'label' => t('Description'),
+  );
+  $properties['status'] = array(
+    'type' => 'integer',
+    'schema field' => 'status',
+    'label' => t('Status'),
+    'options list' => 'workspace_status_options',
+    'required' => TRUE,
+  );
+
+  return $info;
+}
+
+/**
+ * Helper: status options.
+ */
+function workspace_status_options()
+{
+  return array(
+    0 => t('Planning'),
+    1 => t('Active'),
+    2 => t('Inactive'),
+    3 => t('Pending'),
+    4 => t('Archived'),
+  );
+}
+
+/**
+ * Load a single workspace.
+ */
+function workspace_load($id, $reset = FALSE)
+{
+  $workspaces = workspace_load_multiple(array($id), array(), $reset);
+  return reset($workspaces);
+}
+
+/**
+ * Load multiple workspaces.
+ */
+function workspace_load_multiple($ids = array(), $conditions = array(), $reset = FALSE)
+{
+  return entity_load('workspace', $ids, $conditions, $reset);
+}
+
+/**
+ * URI callback for workspace.
+ */
+function workspace_uri($workspace)
+{
+  return array(
+    'path' => 'workspace/' . $workspace->id,
+  );
+}
+
+/**
+ * Page callback: displays a list of workspaces.
+ */
+
+
+
+/**
+ * Access callback for workspace entities.
+ */
+function workspace_access($op, $entity = NULL, $account = NULL)
+{
+  if ($op == 'view' || $op == 'view label') {
+    return user_access('view workspace', $account);
+  }
+  // For edit/delete/create, check administer permission.
+  return user_access('administer workspace', $account);
+}
+
+
+
+/**
+ * Page callback: displays a single workspace.
+ */
+function workspace_view($workspace)
+{
+  drupal_set_title(entity_label('workspace', $workspace));
+  return entity_view('workspace', array($workspace->id => $workspace), 'full');
+}
+
+/**
+ * Page callback: redirect to the add form.
+ */
+function workspace_add()
+{
+  drupal_set_title(t('Add new workspace'));
+  $workspace = entity_create('workspace', array());
+  return drupal_get_form('workspace_edit_form', $workspace);
+}
+
+/**
+ * Form constructor for adding/editing a workspace.
+ */
+function workspace_edit_form($form, &$form_state, $workspace)
+{
+  $form_state['workspace'] = $workspace;
+  $wrapper = entity_metadata_wrapper('workspace', $workspace);
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#required' => TRUE,
+    '#default_value' => $wrapper->title->value(),
+  );
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Description'),
+    '#default_value' => $wrapper->description->value(),
+  );
+  $form['status'] = array(
+    '#type' => 'select',
+    '#title' => t('Status'),
+    '#required' => TRUE,
+    '#options' => workspace_status_options(),
+    '#default_value' => $wrapper->status->value(),
+  );
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save workspace'),
+    '#submit' => array('workspace_edit_form_submit'),
+  );
+  // Check if this is an existing entity (has an ID) to show delete button.
+  if (!empty($workspace->id)) {
+    $form['actions']['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array('workspace_edit_form_delete_submit'),
+    );
+  }
+
+  // Apply custom template.
+  $form['#theme'] = 'workspace_form';
+
+  return $form;
+}
+
+/**
+ * Submit handler for the edit form.
+ */
+function workspace_edit_form_submit($form, &$form_state)
+{
+  $workspace = $form_state['workspace'];
+  entity_form_submit_build_entity('workspace', $workspace, $form, $form_state);
+  $wrapper = entity_metadata_wrapper('workspace', $workspace);
+  $wrapper->save();
+
+  drupal_set_message(t('Workspace %title saved.', array('%title' => $workspace->title)));
+  $form_state['redirect'] = 'workspace/' . $workspace->id;
+}
+
+/**
+ * Submit handler for the delete button.
+ */
+function workspace_edit_form_delete_submit($form, &$form_state)
+{
+  $workspace = $form_state['workspace'];
+  $form_state['redirect'] = 'workspace/' . $workspace->id . '/delete';
+}
+
+/**
+ * Form constructor for delete confirmation.
+ */
+function workspace_delete_form($form, &$form_state, $workspace)
+{
+  $form_state['workspace'] = $workspace;
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete workspace %title?', array('%title' => $workspace->title)),
+    'workspace/' . $workspace->id,
+    t('This action cannot be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Submit handler for delete confirmation.
+ */
+function workspace_delete_form_submit($form, &$form_state)
+{
+  $workspace = $form_state['workspace'];
+  $wrapper = entity_metadata_wrapper('workspace', $workspace);
+  $wrapper->delete();
+  drupal_set_message(t('Workspace %title deleted.', array('%title' => $workspace->title)));
+  $form_state['redirect'] = 'workspace/list';
+}

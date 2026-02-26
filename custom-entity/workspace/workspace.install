@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function workspace_schema() {
+  $schema['workspace'] = array(
+    'description' => 'Custom Entity table for workspace',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary Identifier',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'Title of the workspace',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => 'Description of the workspace',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'Status of the workspace (0=planning,1=active,2=inactive,3=pending,4=archived)',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}

@@ -1,0 +1,7 @@
+name = Workspace
+description = CRUD for custom workspace entity.
+core = 7.x
+package = Custom Entities
+files[] = workspace.module
+files[] = workspace.controller.inc
+dependencies[] = entity
